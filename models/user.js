@@ -22,6 +22,15 @@ const User = {
         );
         return rows[0].count > 0;
     },
+
+    // find user by email
+    findUserByEmail: async (email) => {
+        const [rows] = await pool.query(
+            'SELECT * FROM users WHERE email = ?',
+            [email]
+        );
+        return rows[0];
+    }
 }
 
 module.exports = User;
