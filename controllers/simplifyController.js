@@ -1,6 +1,7 @@
 const openrouterService = require('../services/openrouter');
 
 async function simplify(req, res) {
+    // get original text from request body
     const { text } = req.body;
     
     if (!text || typeof text !== 'string') {
@@ -8,6 +9,7 @@ async function simplify(req, res) {
     }
     
     try {
+        // call OpenRouter service to simplify the article
         const simplifiedText = await openrouterService.simplifyArticle(text);
         
         res.json({
@@ -25,3 +27,4 @@ async function simplify(req, res) {
 module.exports = {
     simplify
 };
+
