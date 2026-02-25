@@ -10,12 +10,15 @@ simpleread/
 ├── bin/www                 # Server startup script
 ├── routes/                 # API route definitions
 │   ├── auth.js             # Authentication routes (register, login)
-│   └── simplify.js         # Article simplification routes
+│   ├── simplify.js         # Article simplification routes
+│   └── article.js          # Article storage routes
 ├── controllers/            # Request handlers with business logic
 │   ├── authController.js   # User registration and login logic
-│   └── simplifyController.js # Text simplification logic
+│   ├── simplifyController.js # Text simplification logic
+│   └── articleController.js # Article CRUD logic
 ├── models/                 # Database models
-│   └── user.js             # User model with MySQL operations
+│   ├── user.js             # User model with MySQL operations
+│   └── article.js          # Article model with MySQL operations
 ├── services/               # External service integrations
 │   └── openrouter.js       # OpenRouter AI API client
 ├── libs/                   # Utility libraries
@@ -42,6 +45,12 @@ simpleread/
 - Authenticated users can submit English articles for simplification.
 - The application uses the OpenRouter API to rewrite articles at a grade 6 reading level.
 - Simplified articles use simpler vocabulary and shorter sentences while preserving the main ideas.
+
+### Article Storage
+- Authenticated users can save original and simplified articles to the database.
+- Users can view all their saved articles in a list.
+- Users can retrieve a specific article by ID with full details.
+- Users can delete their articles.
 
 ## Tech Stack
 
@@ -91,17 +100,27 @@ simpleread/
 
    # OpenRouter API Configuration
    OPENROUTER_API_KEY=your_openrouter_api_key
-   OPENROUTER_MODEL=openai/gpt-3.5-turbo
+   OPENROUTER_MODEL=openai/gpt-4o-mini
    SITE_URL=http://localhost:3000
    ```
 
-4. Create the users table in your MySQL database:
+4. Create the database tables in your MySQL database:
    ```sql
    CREATE TABLE users (
        id INT AUTO_INCREMENT PRIMARY KEY,
        email VARCHAR(255) NOT NULL UNIQUE,
        password_hash VARCHAR(255) NOT NULL,
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   );
+
+   CREATE TABLE articles (
+       id INT PRIMARY KEY AUTO_INCREMENT,
+       user_id INT NOT NULL,
+       original_text LONGTEXT NOT NULL,
+       simplified_text LONGTEXT NOT NULL,
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
    );
    ```
 
@@ -200,6 +219,101 @@ The server runs on port 3000 by default.
   - `400` - Text is required
   - `401` - No token provided / Invalid or expired token
   - `500` - Failed to simplify article
+
+### Article Storage
+
+#### Save Article
+- **URL**: `POST /api/articles/save`
+- **Auth Required**: Yes
+- **Headers**:
+  ```
+  Authorization: Bearer <your_jwt_token>
+  ```
+- **Request Body**:
+  ```json
+  {
+    "originalText": "Original article text...",
+    "simplifiedText": "Simplified version..."
+  }
+  ```
+- **Success Response** (201):
+  ```json
+  {
+    "message": "Article saved successfully",
+    "articleId": 1
+  }
+  ```
+- **Error Responses**:
+  - `400` - Original text and simplified text are required
+  - `401` - No token provided / Invalid or expired token
+  - `500` - Internal server error
+
+#### Get Articles List
+- **URL**: `GET /api/articles/list`
+- **Auth Required**: Yes
+- **Headers**:
+  ```
+  Authorization: Bearer <your_jwt_token>
+  ```
+- **Success Response** (200):
+  ```json
+  {
+    "articles": [
+      {
+        "id": 1,
+        "original_text": "Original article text...",
+        "created_at": "2026-02-25T10:00:00.000Z",
+        "updated_at": "2026-02-25T10:00:00.000Z"
+      }
+    ]
+  }
+  ```
+- **Error Responses**:
+  - `401` - No token provided / Invalid or expired token
+  - `500` - Internal server error
+
+#### Get Article Details
+- **URL**: `GET /api/articles/:id`
+- **Auth Required**: Yes
+- **Headers**:
+  ```
+  Authorization: Bearer <your_jwt_token>
+  ```
+- **Success Response** (200):
+  ```json
+  {
+    "article": {
+      "id": 1,
+      "user_id": 1,
+      "original_text": "Original article text...",
+      "simplified_text": "Simplified version...",
+      "created_at": "2026-02-25T10:00:00.000Z",
+      "updated_at": "2026-02-25T10:00:00.000Z"
+    }
+  }
+  ```
+- **Error Responses**:
+  - `401` - No token provided / Invalid or expired token
+  - `404` - Article not found
+  - `500` - Internal server error
+
+#### Delete Article
+- **URL**: `DELETE /api/articles/:id`
+- **Auth Required**: Yes
+- **Headers**:
+  ```
+  Authorization: Bearer <your_jwt_token>
+  ```
+- **Success Response** (200):
+  ```json
+  {
+    "message": "Article deleted successfully"
+  }
+  ```
+- **Error Responses**:
+  - `401` - No token provided / Invalid or expired token
+  - `404` - Article not found
+  - `500` - Internal server error
 
 ## License
 
