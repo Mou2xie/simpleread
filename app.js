@@ -7,6 +7,7 @@ var logger = require('morgan');
 
 var authRouter = require('./routes/auth');
 var simplifyRouter = require('./routes/simplify');
+var articleRouter = require('./routes/article');
 
 var app = express();
 
@@ -23,6 +24,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // routers
 app.use('/auth', authRouter);
 app.use('/api/simplify', simplifyRouter);
+app.use('/api/articles', articleRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
